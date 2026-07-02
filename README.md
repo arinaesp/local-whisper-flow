@@ -106,3 +106,15 @@ are viable with more headroom.
   worth knowing before running any tool that registers global hotkeys.
 
 ## Architecture
+
+```
+flow.py
+├── Recorder        — captures mic audio while hotkey is held (sounddevice)
+├── clean_text()     — filler removal, spacing, capitalization
+├── inject_text()    — clipboard-paste or simulated-typing output
+└── main()
+    ├── loads config.json (falls back to defaults, writes file on first run)
+    ├── loads faster-whisper model (CPU, int8)
+    ├── registers push-to-talk + quit hotkeys
+    └── on release: transcribe in a background thread, inject if still running
+```
