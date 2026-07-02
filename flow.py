@@ -132,6 +132,7 @@ def main():
     busy = threading.Lock()
     stop_event = threading.Event()
     recording = threading.Event()  # guards against key auto-repeat re-firing on_press
+    active_threads = []
 
     def transcribe_and_type(audio: np.ndarray):
         with busy:
@@ -153,10 +154,13 @@ def main():
                 print("  (no speech detected)")
                 return
             print(f"  [{duration:.1f}s audio, {elapsed:.1f}s transcribe] {text}")
+            if stop_event.is_set():
+                print("  (shutting down, discarding result instead of injecting)")
+                return
             inject_text(text, config["paste_mode"])
 
     def on_press(_event=None):
-        if recording.is_set() or busy.locked():
+        if stop_event.is_set() or recording.is_set() or busy.locked():
             return
         recording.set()
         print("* recording... (release to transcribe)")
@@ -167,7 +171,11 @@ def main():
             return
         recording.clear()
         audio = recorder.stop()
-        threading.Thread(target=transcribe_and_type, args=(audio,), daemon=True).start()
+        if stop_event.is_set():
+            return  # ignore anything captured right as we're shutting down
+        t = threading.Thread(target=transcribe_and_type, args=(audio,), daemon=True)
+        active_threads.append(t)
+        t.start()
 
     keyboard.on_press_key(config["hotkey"], on_press, suppress=False)
     keyboard.on_release_key(config["hotkey"], on_release, suppress=False)
@@ -177,6 +185,10 @@ def main():
         stop_event.wait()
     except KeyboardInterrupt:
         pass
+
+    keyboard.unhook_all()
+    for t in active_threads:
+        t.join(timeout=10)
     print("bye.")
 
 
