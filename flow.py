@@ -24,7 +24,7 @@ DEFAULT_CONFIG = {
     "hotkey": "right ctrl",       # hold to record, release to transcribe
     "quit_hotkey": "ctrl+alt+q",
     "model_size": "base",          # tiny | base | small | medium | large-v3
-    "language": None,              # None = auto-detect, or e.g. "en", "ru"
+    "language": "None",              # None = auto-detect, or e.g. "en", "ru"
     "remove_fillers": True,
     "paste_mode": "clipboard",     # "clipboard" (fast, reliable) or "type"
     "sample_rate": 16000,
